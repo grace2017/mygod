@@ -16,10 +16,7 @@
 ")"	return T_RP;
 
 ([1-9][0-9]*)|0 {
-	int tmp = 0;
-	sscanf(yytext, "%d", &tmp);
-
-	yylval.int_val = tmp;
+	sscanf(yytext, "%d", &yylval.int_val);
 
 	return T_INT;
 }
