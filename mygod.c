@@ -19,6 +19,61 @@ create_int_expr(int val)
 	return p;
 }
 
+/*
+        创建运算表达式（加、减、乘、除、求余）
+
+        参数一：表达式类型
+        参数二：左操作数
+        参数三：右操作数
+*/
+PExpression
+create_operation_expression(
+        int type,
+        PExpression p1,
+        PExpression p2)
+{
+        PExpression p = (PExpression)calloc(1, sizeof(Expression));
+        if(NULL == p) {
+                perror("calloc failed");
+
+                exit(0);
+        }
+
+        p->type = type;
+        p->u.binary_expression.left = p1;
+        p->u.binary_expression.right = p2;
+
+        return p;
+}
+
+void
+free_expression(PExpression p, int is_free_self)
+{
+        if(NULL == p) return;
+
+        free(p->u.binary_expression.left);
+        p->u.binary_expression.left = NULL;
+
+        free(p->u.binary_expression.right);
+        p->u.binary_expression.right = NULL;
+
+        if(1 == is_free_self) {
+                free(p);
+                p = NULL;
+        }
+}
+
+void
+update_result_expression(PExpression p, int result)
+{
+        if(NULL == p) return;
+
+        free_expression(p, 0);
+
+        p->type = INT_EXPRESSION;
+        p->u.int_val = result;
+}
+
 void
 print_expr_tree(PExpression p)
 {
@@ -77,77 +132,38 @@ print_expr_tree(PExpression p)
 
 static
 int
-run_add_expr(PExpression p)
+run_operation_expression(PExpression p)
 {
 	if(NULL == p) return 0;
 
-	int v1 = p->u.binary_expression.left->u.int_val;
-	int v2 = p->u.binary_expression.right->u.int_val;
+        int result = 0;
 
-	//将计算的结果写入保存+的Expression中
-	p->u.int_val = v1 + v2;
-
-	return v1 + v2;
-}
-
-static
-int
-run_sub_expr(PExpression p)
-{
-	if(NULL == p) return 0;
-
-	int v1 = p->u.binary_expression.left->u.int_val;
-	int v2 = p->u.binary_expression.right->u.int_val;
-
-	//将计算的结果写入保存-的Expression中
-	p->u.int_val = v1 - v2;
-
-	return v1 - v2;
-}
-
-static
-int
-run_mul_expr(PExpression p)
-{
-	if(NULL == p) return 0;
-
-	int v1 = p->u.binary_expression.left->u.int_val;
+        int v1 = p->u.binary_expression.left->u.int_val;
         int v2 = p->u.binary_expression.right->u.int_val;
 
-	//将计算的结果写入保存*的Expression中
-	p->u.int_val = v1 * v2;
+	switch(p->type) {
+		case ADD_EXPRESSION:
+			result = v1 + v2;
+			break;
+		case SUB_EXPRESSION:
+			result = v1 - v2;
+			break;
+		case MUL_EXPRESSION:
+			result = v1 * v2;
+			break;
+		case DIV_EXPRESSION:
+			result = v1 / v2;
+			break;
+		case MOD_EXPRESSION:
+			result = v1 % v2;
+			break;
+		default:
+			break;
+	}
 
-	return v1 * v2;
-}
+        update_result_expression(p, result);
 
-static
-int
-run_div_expr(PExpression p)
-{
-	if(NULL == p) return 0;
-
-	int v1 = p->u.binary_expression.left->u.int_val;
-        int v2 = p->u.binary_expression.right->u.int_val;
-
-	//将计算的结果写入保存/的Expression中
-	p->u.int_val = v1 / v2;
-
-	return v1 / v2;
-}
-
-static
-int
-run_mod_expr(PExpression p)
-{
-	if(NULL == p) return 0;
-
-	int v1 = p->u.binary_expression.left->u.int_val;
-        int v2 = p->u.binary_expression.right->u.int_val;
-
-	//将计算的结果写入保存%的Expression中
-	p->u.int_val = v1 % v2;
-
-	return v1 % v2;
+        return result;
 }
 
 void
@@ -161,78 +177,34 @@ run_expr_tree(PExpression p, int *return_val)
                 case ADD_EXPRESSION:
                         run_expr_tree(p->u.binary_expression.left, return_val);
                         run_expr_tree(p->u.binary_expression.right, return_val);
-			*return_val = run_add_expr(p);
+			*return_val = run_operation_expression(p);
 
                         break;
                 case SUB_EXPRESSION:
                         run_expr_tree(p->u.binary_expression.left, return_val);
                         run_expr_tree(p->u.binary_expression.right, return_val);
-			*return_val = run_sub_expr(p);
+			*return_val = run_operation_expression(p);
 
                         break;
                 case MUL_EXPRESSION:
                         run_expr_tree(p->u.binary_expression.left, return_val);
                         run_expr_tree(p->u.binary_expression.right, return_val);
-			*return_val = run_mul_expr(p);
+			*return_val = run_operation_expression(p);
 
                         break;
                 case DIV_EXPRESSION:
                         run_expr_tree(p->u.binary_expression.left, return_val);
                         run_expr_tree(p->u.binary_expression.right, return_val);
-			*return_val = run_div_expr(p);
+			*return_val = run_operation_expression(p);
 
                         break;
                 case MOD_EXPRESSION:
                         run_expr_tree(p->u.binary_expression.left, return_val);
                         run_expr_tree(p->u.binary_expression.right, return_val);
-			*return_val = run_mod_expr(p);
+			*return_val = run_operation_expression(p);
 
                         break;
                 default:
                         break;
         }
-}
-
-/*
-        创建运算表达式（加、减、乘、除、求余）
-
-        参数一：表达式类型
-        参数二：左操作数
-        参数三：右操作数
-*/
-PExpression
-create_operation_expression(
-	int type, 
-	PExpression expr1_p, 
-	PExpression expr2_p)
-{
-	PExpression p = (PExpression)calloc(1, sizeof(Expression));
-	if(NULL == p) {
-		perror("calloc failed");
-
-		exit(0);
-	}
-
-	p->type = type;
-	p->u.binary_expression.left = expr1_p;
-	p->u.binary_expression.right = expr2_p;
-
-	return p;
-}
-
-PExpression
-create_add_expression(PExpression p1, PExpression p2)
-{
-	PExpression p = (PExpression)calloc(1, sizeof(Expression));
-        if(NULL == p) {
-                perror("calloc failed");
-
-                exit(0);
-        }
-
-	p->type = ADD_EXPRESSION;
-	p->u.binary_expression.left = p1;
-	p->u.binary_expression.right = p2;
-
-	return p;	
 }

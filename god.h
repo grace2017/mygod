@@ -36,9 +36,19 @@ PExpression create_operation_expression(int, PExpression, PExpression);
 PExpression create_add_expression(PExpression, PExpression);
 
 /*
+	第二个参数：是否释放自己 1是 0否
+*/
+void free_expression(PExpression p, int is_free_self);
+
+/*
 	创建表达式
 */
 PExpression create_int_expr(int);
+
+/*
+	计算完表达式后调用
+*/
+void update_result_expression(PExpression p, int result);
 
 /*
 	中序遍历抽象语法树
