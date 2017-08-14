@@ -5,3 +5,4 @@
 
 清除：make clean
 安装：make
+监测：使用valgrind监测，无内存相关问题
