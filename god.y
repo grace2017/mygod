@@ -37,6 +37,8 @@ line
 		run_expr_tree($1, &result);
 		printf(" = %d \n", result);
 
+		free($1);
+
 		printf("\n");
         }
         ;
