@@ -33,7 +33,6 @@ struct expression {
 	参数三：右操作数
 */
 PExpression create_operation_expression(int, PExpression, PExpression);
-PExpression create_add_expression(PExpression, PExpression);
 
 /*
 	第二个参数：是否释放自己 1是 0否
